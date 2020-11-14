@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# Собирает и отправляет данные с компа/сервера
+
+cpu_usage=$((grep 'cpu ' /proc/stat;sleep 0.1;grep 'cpu ' /proc/stat) \
+	| awk -v RS="" '{print ($13-$2+$15-$4)*100/($13-$2+$15-$4+$16-$5)}')
+
+memory_usage=$(awk '/MemTotal/{t=$2}/MemAvailable/{a=$2}END{print 100-100*a/t}' /proc/meminfo)
+
+disk_usage=$(df | awk '/ \/$/{print $5}' | tr -d '%')
+
+curl -X POST -H 'Content-type: application/json' \
+	--data "{\"cpu\": \"${cpu_usage}\", \"memory\": \"${memory_usage}\", \"disk\": \"${disk_usage}\"}" \
+	http://207.154.248.55:3000/api/stat
