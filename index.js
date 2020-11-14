@@ -13,7 +13,8 @@ app.use(bodyParser.json());
 
 const dbPath = 'mongodb://localhost/servermonitor';
 const options = {useNewUrlParser: true, useUnifiedTopology: true}
-const mongo = mongoose.connect(dbPath, options);mongo.then(() => {
+const mongo = mongoose.connect(dbPath, options);
+mongo.then(() => {
     console.log('Connected to Database');
 }, error => {
     console.log(error, 'error');
