@@ -1,16 +1,14 @@
 <html>
   <head>
-    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
-    <title>
-      System Monitor
-    </title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <title>System Monitor</title>
     <style>
       .container {
-          width: 1000px;
-          padding: 16px;
-          margin: 16px;
-          border: 1px solid #b9b9b9;
-          border-radius: 8px;
+        width: 1000px;
+        padding: 16px;
+        margin: 16px;
+        border: 1px solid #b9b9b9;
+        border-radius: 8px;
       }
       #control-date {
         height: 50px;
@@ -19,7 +17,10 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        flex-direction: column; 
+        flex-direction: column;
+      }
+      svg > g > g:last-child {
+        pointer-events: none;
       }
     </style>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
@@ -38,9 +39,9 @@
       <div id="chart"></div>
       <div id="control-date"></div>
     </div>
-    <div id="pie-chart" class="container"> </div>
+    <div id="pie-chart" class="container"></div>
   </body>
-  <script type="text/javascript">    
+  <script type="text/javascript">
     google.charts.load('current', {
       callback: function () {
         drawChart();
@@ -50,16 +51,16 @@
 
     function drawChart() {
       $.ajax({
-        url: "api/stat/" + document.getElementById("timerange").value,
-        type: "GET",
-        contentType: "application/json",
+        url: 'api/stat/' + document.getElementById('timerange').value,
+        type: 'GET',
+        contentType: 'application/json',
         success: function (stats) {
           var stats_len = stats.length;
           var area_chart_data = new google.visualization.DataTable();
           area_chart_data.addColumn('datetime', 'TimeStamp');
           area_chart_data.addColumn('number', 'CPU');
           area_chart_data.addColumn('number', 'RAM');
-          
+
           var startDate = new Date(stats[0].created_at);
           var endDate = new Date(stats[stats_len - 1].created_at);
 
@@ -69,8 +70,8 @@
               stat.cpu / 100,
               stat.memory / 100
             ]);
-          })
-          
+          });
+
           var chart = new google.visualization.ChartWrapper({
             chartType: 'SteppedAreaChart',
             containerId: 'chart',
@@ -78,7 +79,7 @@
               title: 'USAGE',
               vAxis: {
                 format: '#%',
-                viewWindow: {min: 0, max: 1}
+                viewWindow: { min: 0, max: 1 }
               },
               focusTarget: 'category'
             }
@@ -91,8 +92,8 @@
               filterColumnLabel: 'TimeStamp',
               ui: {
                 chartOptions: {
-                  chartArea: { 
-                    'width': '80%'
+                  chartArea: {
+                    width: '80%'
                   },
                   hAxis: {
                     format: 'dd MMM YYYY'
@@ -102,7 +103,9 @@
             }
           });
 
-          var dash = new google.visualization.Dashboard(document.getElementById('dashboard'));
+          var dash = new google.visualization.Dashboard(
+            document.getElementById('dashboard')
+          );
           dash.bind([controlDate], [chart]);
           dash.draw(area_chart_data);
 
@@ -111,7 +114,7 @@
           pie_data.addColumn('number', 'Slices');
           pie_data.addRows([
             ['Used', stats[stats_len - 1].disk_used],
-            ['Available', stats[stats_len - 1].disk_available],
+            ['Available', stats[stats_len - 1].disk_available]
           ]);
 
           var formatNumber = new google.visualization.NumberFormat({
@@ -119,15 +122,17 @@
             fractionDigits: 0
           });
           formatNumber.format(pie_data, 1);
-          
+
           var pie_options = {
-            title:'DISK USAGE',
+            title: 'DISK USAGE',
             tooltip: {
               text: 'value'
             }
           };
 
-          var pie_chart = new google.visualization.PieChart(document.getElementById('pie-chart'));
+          var pie_chart = new google.visualization.PieChart(
+            document.getElementById('pie-chart')
+          );
           pie_chart.draw(pie_data, pie_options);
         }
       });
