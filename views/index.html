@@ -9,6 +9,7 @@
         margin: 16px;
         border: 1px solid #b9b9b9;
         border-radius: 8px;
+        display: flex;
       }
       #control-date {
         height: 50px;
@@ -19,8 +20,45 @@
         align-items: center;
         flex-direction: column;
       }
-      svg > g > g:last-child {
+      #pie-chart svg > g > g:last-child {
         pointer-events: none;
+      }
+      .toggle-button {
+        width: 40px;
+        height: 20px;
+        background: gray;
+        border-radius: 15px;
+        padding: 2.5px;
+        transition: all 300ms ease-in-out;
+      }
+      .toggle-button > .inner-circle {
+        width: 20px;
+        height: 20px;
+        background: white;
+        border-radius: 50%;
+        transition: all 300ms ease-in-out;
+      }
+      .toggle-button.active {
+        background: #00caee;
+      }
+      .toggle-button.active > .inner-circle {
+        margin-left: 20px;
+      }
+      .left-container {
+        width: 50%;
+        border-right: black 2px solid;
+        padding: 10px;
+        display: flex;
+        justify-content: space-around;
+      }
+      .right-container {
+        /* придраться к css (повтор кода, можно было в 1 объединить), вынести css в отдельный файл*/
+        width: 50%;
+        padding: 10px;
+        text-align: center;
+      }
+      #refresh-button {
+        margin: 0.5rem;
       }
     </style>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
@@ -29,12 +67,35 @@
     <script type="text/javascript" src="http://www.google.com/jsapi"></script>
   </head>
   <body>
-    <select id="timerange" onchange="drawChart()">
-      <option value="1">Last hour</option>
-      <option value="6">Last 6 hours</option>
-      <option value="12">Last 12 hours</option>
-    </select>
-    <button onclick="drawChart()">Refresh</button>
+    <div id="parameters" class="container">
+      <div class="left-container">
+        <div id="refresh-card">
+          <p>Time to refresh</p>
+          <select id="update-frequency" onchange="updateFrequency(this.value)">
+            <option value="1">1 second</option>
+            <option value="5" selected="selected">5 seconds</option>
+            <option value="10">10 seconds</option>
+            <option value="60">60 seconds</option>
+          </select>
+        </div>
+        <div id="auto-refresh">
+          <p>Auto refresh</p>
+          <div class="toggle-button active" onclick="toggleClicked(this)">
+            <div class="inner-circle"></div>
+          </div>
+        </div>
+      </div>
+      <div class="right-container">
+        <p>Time interval</p>
+        <select id="timerange" onchange="drawChart()">
+          <option value="1">Last hour</option>
+          <option value="6">Last 6 hours</option>
+          <option value="12">Last 12 hours</option>
+        </select>
+        <br />
+        <button id="refresh-button" onclick="drawChart()">Refresh</button>
+      </div>
+    </div>
     <div id="dashboard" class="container">
       <div id="chart"></div>
       <div id="control-date"></div>
@@ -48,6 +109,30 @@
       },
       packages: ['controls', 'corechart']
     });
+
+    let _updateFrequency = 5000;
+
+    function updateFrequency(seconds) {
+      _updateFrequency = seconds * 1000;
+    }
+
+    function refreshLoop() {
+      drawChart();
+      setTimeout(refreshLoop, _updateFrequency);
+    }
+    setTimeout(refreshLoop, _updateFrequency);
+
+    function toggleClicked(toggleButton) {
+      toggleButton.classList.toggle('active');
+      if (toggleButton.classList.contains('active')) {
+        _updateFrequency =
+          document.getElementById('update-frequency').value * 1000;
+        refreshLoop(); // вот тут можно придраться до того, как реализовано авто обновление - мы оставляем старый луп крутиться с 2147483647(25 дней),
+        //а вместо него запускаем новый луп, тип неоптимально вся фигня
+      } else {
+        _updateFrequency = 2147483647;
+      }
+    }
 
     function drawChart() {
       $.ajax({
