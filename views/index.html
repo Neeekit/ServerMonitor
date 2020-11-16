@@ -11,6 +11,9 @@
         border-radius: 8px;
         display: flex;
       }
+      #dashboard {
+        display: block !important;
+      }
       #control-date {
         height: 50px;
       }
@@ -67,6 +70,8 @@
     <script type="text/javascript" src="http://www.google.com/jsapi"></script>
   </head>
   <body>
+    <p>Adress</p>
+    <select id="adresses" onchange="drawCharts()"> </select>
     <div id="parameters" class="container">
       <div class="left-container">
         <div id="refresh-card">
@@ -87,13 +92,13 @@
       </div>
       <div class="right-container">
         <p>Time interval</p>
-        <select id="timerange" onchange="drawChart()">
-          <option value="1">Last hour</option>
+        <select id="timerange" onchange="drawCharts()">
+          <option value="1" selected="selected">Last hour</option>
           <option value="6">Last 6 hours</option>
           <option value="12">Last 12 hours</option>
         </select>
         <br />
-        <button id="refresh-button" onclick="drawChart()">Refresh</button>
+        <button id="refresh-button" onclick="drawCharts()">Refresh</button>
       </div>
     </div>
     <div id="dashboard" class="container">
@@ -103,9 +108,22 @@
     <div id="pie-chart" class="container"></div>
   </body>
   <script type="text/javascript">
+    var adressSelect = document.getElementById('adresses');
+    var request = new XMLHttpRequest();
+    request.open('GET', '/api/ip', false);
+    request.send();
+    //не чекаем статус ответа
+    var response = JSON.parse(request.response);
+    $.each(response, function (index, ip) {
+      var option = document.createElement('option');
+      option.value = ip;
+      option.innerHTML = ip;
+      adressSelect.appendChild(option);
+    });
+
     google.charts.load('current', {
       callback: function () {
-        drawChart();
+        drawCharts();
       },
       packages: ['controls', 'corechart']
     });
@@ -117,7 +135,7 @@
     }
 
     function refreshLoop() {
-      drawChart();
+      drawCharts();
       setTimeout(refreshLoop, _updateFrequency);
     }
     setTimeout(refreshLoop, _updateFrequency);
@@ -134,91 +152,91 @@
       }
     }
 
-    function drawChart() {
-      $.ajax({
-        url: 'api/stat/' + document.getElementById('timerange').value,
-        type: 'GET',
-        contentType: 'application/json',
-        success: function (stats) {
-          var stats_len = stats.length;
-          var area_chart_data = new google.visualization.DataTable();
-          area_chart_data.addColumn('datetime', 'TimeStamp');
-          area_chart_data.addColumn('number', 'CPU');
-          area_chart_data.addColumn('number', 'RAM');
-
-          var startDate = new Date(stats[0].created_at);
-          var endDate = new Date(stats[stats_len - 1].created_at);
-
-          $.each(stats, function (index, stat) {
-            area_chart_data.addRow([
-              new Date(stat.created_at),
-              stat.cpu / 100,
-              stat.memory / 100
-            ]);
-          });
-
-          var chart = new google.visualization.ChartWrapper({
-            chartType: 'SteppedAreaChart',
-            containerId: 'chart',
-            options: {
-              title: 'USAGE',
-              vAxis: {
-                format: '#%',
-                viewWindow: { min: 0, max: 1 }
+    function drawAreaChart(stats) {
+      var stats_len = stats.length;
+      var data = new google.visualization.DataTable();
+      data.addColumn('datetime', 'TimeStamp');
+      data.addColumn('number', 'CPU');
+      data.addColumn('number', 'RAM');
+      var startDate = new Date(stats[0].created_at); // не чекаем что stats не пустой
+      var endDate = new Date(stats[stats_len - 1].created_at);
+      $.each(stats, function (index, stat) {
+        data.addRow([
+          new Date(stat.created_at),
+          stat.cpu / 100,
+          stat.memory / 100
+        ]);
+      });
+      var chart = new google.visualization.ChartWrapper({
+        chartType: 'SteppedAreaChart',
+        containerId: 'chart',
+        options: {
+          title: 'USAGE',
+          vAxis: {
+            format: '#%',
+            viewWindow: { min: 0, max: 1 }
+          },
+          focusTarget: 'category'
+        }
+      });
+      var controlDate = new google.visualization.ControlWrapper({
+        controlType: 'ChartRangeFilter',
+        containerId: 'control-date',
+        options: {
+          filterColumnLabel: 'TimeStamp',
+          ui: {
+            chartOptions: {
+              chartArea: {
+                width: '80%'
               },
-              focusTarget: 'category'
-            }
-          });
-
-          var controlDate = new google.visualization.ControlWrapper({
-            controlType: 'ChartRangeFilter',
-            containerId: 'control-date',
-            options: {
-              filterColumnLabel: 'TimeStamp',
-              ui: {
-                chartOptions: {
-                  chartArea: {
-                    width: '80%'
-                  },
-                  hAxis: {
-                    format: 'dd MMM YYYY'
-                  }
-                }
+              hAxis: {
+                format: 'dd MMM'
               }
             }
-          });
+          }
+        }
+      });
+      var dash = new google.visualization.Dashboard(
+        document.getElementById('dashboard')
+      );
+      dash.bind([controlDate], [chart]);
+      dash.draw(data);
+    }
 
-          var dash = new google.visualization.Dashboard(
-            document.getElementById('dashboard')
-          );
-          dash.bind([controlDate], [chart]);
-          dash.draw(area_chart_data);
+    function drawPieChart(stats) {
+      var stats_len = stats.length;
+      var data = new google.visualization.DataTable();
+      data.addColumn('string', 'Topping');
+      data.addColumn('number', 'Slices');
+      data.addRows([
+        ['Used', stats[stats_len - 1].disk_used],
+        ['Available', stats[stats_len - 1].disk_available]
+      ]);
+      var formatNumber = new google.visualization.NumberFormat({
+        suffix: ' bytes',
+        fractionDigits: 0
+      });
+      formatNumber.format(data, 1);
+      var pie_options = {
+        title: 'DISK USAGE',
+        tooltip: {
+          text: 'value'
+        }
+      };
+      var pie_chart = new google.visualization.PieChart(
+        document.getElementById('pie-chart')
+      );
+      pie_chart.draw(data, pie_options);
+    }
 
-          var pie_data = new google.visualization.DataTable();
-          pie_data.addColumn('string', 'Topping');
-          pie_data.addColumn('number', 'Slices');
-          pie_data.addRows([
-            ['Used', stats[stats_len - 1].disk_used],
-            ['Available', stats[stats_len - 1].disk_available]
-          ]);
-
-          var formatNumber = new google.visualization.NumberFormat({
-            suffix: ' bytes',
-            fractionDigits: 0
-          });
-          formatNumber.format(pie_data, 1);
-
-          var pie_options = {
-            title: 'DISK USAGE',
-            tooltip: {
-              text: 'value'
-            }
-          };
-
-          var pie_chart = new google.visualization.PieChart(
-            document.getElementById('pie-chart')
-          );
-          pie_chart.draw(pie_data, pie_options);
+    function drawCharts() {
+      $.ajax({
+        url: 'api/stat/' + document.getElementById('adresses').value + '&' + document.getElementById('timerange').value,
+        type: 'GET',
+        contentType: 'application/json',
+        success: (stats) => {
+          drawAreaChart(stats);
+          drawPieChart(stats);
         }
       });
     }

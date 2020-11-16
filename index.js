@@ -13,7 +13,7 @@ app.use(bodyParser.json());
 app.use('/api', apiRoutes);
 app.use('/', appRoutes);
 
-const dbPath = 'mongodb://localhost/servermonitor';
+const dbPath = 'mongodb://re:rerere@207.154.248.55/servermonitor';
 const options = {useNewUrlParser: true, useUnifiedTopology: true}
 const mongo = mongoose.connect(dbPath, options);
 
@@ -23,6 +23,6 @@ mongo.then(() => {
     console.log(error, 'error');
 });
 
-app.listen(3030, function() {
+app.listen(8080, function() {
     console.log("Running App");
 });
