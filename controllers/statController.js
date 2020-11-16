@@ -8,27 +8,37 @@ exports.add = function (req, res) {
     stat.disk_available = req.body.disk_available;
     stat.ip = req.body.ip;
 
-    stat.save(function (err) {
-        if (err) res.json(err);
-        res.json(stat);
+    stat.save(err => {
+        if (err) {
+            res.json(err);
+        }
+        else {
+            res.json(stat);
+        }
     });
 };
 
-exports.get = function (req, res) {
-    Stat.find({}, function(err, stats) {
-        if (err) res.json(err);
-        res.json(stats);
+exports.get = (req, res) => {
+    Stat.find({}, (err, stats) => {
+        if (err) {
+            res.json(err);
+        } else {
+            res.json(stats);
+        }
     });
 };
 
-exports.getUniqueIp = function (req, res) {
-    Stat.distinct('ip', function(err, ipList) {
-        if (err) res.json(err);
-        res.json(ipList);
+exports.getUniqueIp = (req, res) => {
+    Stat.distinct('ip', (err, ipList) => {
+        if (err) {
+            res.json(err);
+        } else {
+            res.json(ipList);
+        }
     });
 };
 
-exports.getByIpAndHours = function(req, res) {
+exports.getByIpAndHours = (req, res) => {
     var lastHour = new Date();
     lastHour.setHours(lastHour.getHours() - req.params.hours);
     Stat.find({
@@ -38,8 +48,11 @@ exports.getByIpAndHours = function(req, res) {
         }
     }).sort({
         created_at: 1
-    }).exec(function (err, stats) {
-        if (err) res.json(err);
-        res.json(stats);
+    }).exec((err, stats) => {
+        if (err) {
+            res.json(err);
+        } else {
+            res.json(stats);
+        }
     });
 };

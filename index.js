@@ -24,5 +24,5 @@ mongo.then(() => {
 });
 
 app.listen(8080, function() {
-    console.log("Running App");
+    console.log('Running App');
 });
