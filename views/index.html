@@ -234,15 +234,12 @@
     }
 
     function drawCharts() {
-      $.ajax({
-        url: 'api/stat/' + document.getElementById('addresses').value + '&' + document.getElementById('timerange').value,
-        type: 'GET',
-        contentType: 'application/json',
-        success: (stats) => {
-          drawAreaChart(stats);
-          drawPieChart(stats);
-        }
-      });
+      fetch('api/stat/' + document.getElementById('addresses').value + '&' + document.getElementById('timerange').value)
+        .then(res => res.json())
+        .then(data => {
+          drawAreaChart(data);
+          drawPieChart(data);
+        });
     }
   </script>
 </html>
