@@ -6,7 +6,7 @@ exports.add = function (req, res) {
     stat.memory = req.body.memory;
     stat.disk_used = req.body.disk_used;
     stat.disk_available = req.body.disk_available;
-    stat.ip = req.connection.remoteAddress;
+    stat.ip = req.body.ip;
 
     stat.save(function (err) {
         if (err) res.json(err);
@@ -21,10 +21,18 @@ exports.get = function (req, res) {
     });
 };
 
-exports.getWithinHours = function(req, res) {
+exports.getUniqueIp = function (req, res) {
+    Stat.distinct('ip', function(err, ipList) {
+        if (err) res.json(err);
+        res.json(ipList);
+    });
+};
+
+exports.getByIpAndHours = function(req, res) {
     var lastHour = new Date();
     lastHour.setHours(lastHour.getHours() - req.params.hours);
     Stat.find({
+        ip: req.params.ip,
         created_at : {
             $gt: lastHour
         }

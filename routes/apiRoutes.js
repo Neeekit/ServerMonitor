@@ -5,7 +5,10 @@ router.route('/stat')
     .get(statController.get)
     .post(statController.add);
 
-router.route('/stat/:hours')
-    .get(statController.getWithinHours)
+router.route('/stat/:ip&:hours')
+    .get(statController.getByIpAndHours);
+
+router.route('/ip')
+    .get(statController.getUniqueIp);
 
 module.exports = router;
