@@ -237,8 +237,10 @@
       fetch('api/stat/' + document.getElementById('addresses').value + '&' + document.getElementById('timerange').value)
         .then(res => res.json())
         .then(data => {
-          drawAreaChart(data);
-          drawPieChart(data);
+          if (data && data.length) {
+            drawAreaChart(data);
+            drawPieChart(data);
+          }
         });
     }
   </script>
