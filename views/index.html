@@ -71,7 +71,7 @@
   </head>
   <body>
     <p>Adress</p>
-    <select id="adresses" onchange="drawCharts()"> </select>
+    <select id="addresses" onchange="drawCharts()"> </select>
     <div id="parameters" class="container">
       <div class="left-container">
         <div id="refresh-card">
@@ -93,8 +93,8 @@
       <div class="right-container">
         <p>Time interval</p>
         <select id="timerange" onchange="drawCharts()">
-          <option value="1" selected="selected">Last hour</option>
-          <option value="6">Last 6 hours</option>
+          <option value="1">Last hour</option>
+          <option value="6" selected="selected">Last 6 hours</option>
           <option value="12">Last 12 hours</option>
         </select>
         <br />
@@ -108,18 +108,38 @@
     <div id="pie-chart" class="container"></div>
   </body>
   <script type="text/javascript">
-    var adressSelect = document.getElementById('adresses');
-    var request = new XMLHttpRequest();
-    request.open('GET', '/api/ip', false);
-    request.send();
-    //не чекаем статус ответа
-    var response = JSON.parse(request.response);
-    $.each(response, function (index, ip) {
-      var option = document.createElement('option');
-      option.value = ip;
-      option.innerHTML = ip;
-      adressSelect.appendChild(option);
-    });
+    // var adressSelect = document.getElementById('adresses');
+    // var request = new XMLHttpRequest();
+    // request.open('GET', '/api/ip', false);
+    // request.send();
+    // //не чекаем статус ответа
+    // var response = JSON.parse(request.response);
+    // $.each(response, function (index, ip) {
+    //   var option = document.createElement('option');
+    //   option.value = ip;
+    //   option.innerHTML = ip;
+    //   adressSelect.appendChild(option);
+    // });
+
+
+    async function getAddresses(){
+      fetch('/api/ip')
+        .then(res=>res.json())
+        .then(data => {
+          if (data && data.length){
+            data.forEach(ip => {
+              let addressSelect = document.getElementById('addresses');
+              let option = document.createElement('option');
+              option.value = ip;
+              option.innerHTML = ip;
+              addressSelect.appendChild(option);
+            });
+          }
+        });
+    }
+    getAddresses();
+
+
 
     google.charts.load('current', {
       callback: function () {
@@ -190,7 +210,7 @@
                 width: '80%'
               },
               hAxis: {
-                format: 'dd MMM'
+                format: 'dd MMM YYYY'
               }
             }
           }
@@ -231,7 +251,7 @@
 
     function drawCharts() {
       $.ajax({
-        url: 'api/stat/' + document.getElementById('adresses').value + '&' + document.getElementById('timerange').value,
+        url: 'api/stat/' + document.getElementById('addresses').value + '&' + document.getElementById('timerange').value,
         type: 'GET',
         contentType: 'application/json',
         success: (stats) => {
